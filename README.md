@@ -364,3 +364,7 @@ a check there holds every existing patch to it immediately.
 - Composing one patch's regions as another's borders. `patch.Regioner` exists
   and the cell patches implement it; the patch that consumes it waits until
   there is a real second use.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
