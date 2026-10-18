@@ -1,0 +1,5 @@
+/adraw
+*.svg
+*.nc
+/out/
+.DS_Store

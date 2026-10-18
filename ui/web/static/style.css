@@ -1,0 +1,367 @@
+:root {
+  --bg: #16171a;
+  --panel: #1e2024;
+  --line: #2e3238;
+  --text: #e6e7e9;
+  --muted: #8b9096;
+  --accent: #6ea8fe;
+  --paper: #ffffff;
+  --header: 46px;
+}
+
+* { box-sizing: border-box; }
+
+/* A rule with an explicit display (the crumb is a flex row, the views are flex
+   or block) beats the browser's default [hidden] rule, which would leave the
+   header showing a stray separator on the gallery. */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ------------------------------------------------------------------ header */
+
+#header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--header);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  z-index: 10;
+}
+
+.brand {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.crumb { display: flex; align-items: center; gap: 10px; }
+.sep { color: var(--line); }
+.crumb-category { color: var(--muted); }
+.crumb-patch { font-weight: 600; letter-spacing: 0.01em; }
+
+.back {
+  flex: none;
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.back:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ----------------------------------------------------------------- gallery */
+
+.gallery {
+  height: 100vh;
+  padding: calc(var(--header) + 26px) 26px 40px;
+  overflow-y: auto;
+}
+
+.lede {
+  max-width: 62ch;
+  margin: 0 0 26px;
+  color: var(--muted);
+}
+
+.category { margin-bottom: 34px; }
+
+.category h2 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.category p {
+  max-width: 68ch;
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.tile {
+  /* Column flex with a growing body, so tiles in a row stay the same height
+     however long their descriptions are. */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.12s, transform 0.12s;
+}
+.tile:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+.tile canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 297 / 210;
+  background: var(--paper);
+}
+
+.tile-body { flex: 1; padding: 9px 11px 11px; }
+.tile-name { font-weight: 600; margin-bottom: 2px; }
+.tile-desc { font-size: 11.5px; line-height: 1.4; color: var(--muted); }
+
+/* ------------------------------------------------------------------ editor */
+
+.editor {
+  display: flex;
+  height: 100vh;
+  padding-top: var(--header);
+}
+
+#panel {
+  width: 310px;
+  flex: none;
+  padding: 18px;
+  overflow-y: auto;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+}
+
+.field { display: block; margin-bottom: 10px; }
+
+.field-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+select {
+  width: 100%;
+  padding: 7px 9px;
+  margin-bottom: 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.page-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.page-row input { flex: 1; min-width: 0; padding: 6px 7px; }
+.page-x, .page-unit { flex: none; font-size: 11px; color: var(--muted); }
+
+.icon {
+  flex: none;
+  width: 28px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.icon:hover { border-color: var(--accent); color: var(--accent); }
+
+input[type="number"] {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.seed-row { display: flex; gap: 6px; }
+.seed-row input { flex: 1; }
+.seed-row button { flex: none; width: 36px; padding: 0; font-size: 15px; }
+
+.desc {
+  margin: 0 0 18px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.param { margin-bottom: 15px; }
+
+.param-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.param-name { font-size: 12px; font-weight: 500; }
+
+.param-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.param-desc {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+input[type="range"] {
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px; border-radius: 2px; background: var(--line);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px; margin-top: -5px;
+  border: none; border-radius: 50%; background: var(--accent); cursor: pointer;
+}
+input[type="range"]::-moz-range-track {
+  height: 3px; border-radius: 2px; background: var(--line);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 13px; height: 13px;
+  border: none; border-radius: 50%; background: var(--accent); cursor: pointer;
+}
+
+.actions { display: flex; gap: 6px; margin: 22px 0 10px; }
+
+/* Two rows rather than four buttons abreast: at panel width the labels wrap
+   mid-word otherwise. Split by purpose - view actions above, exports below. */
+.actions-tight { margin-top: 0; }
+
+.actions button { white-space: nowrap; }
+
+button {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  background: var(--accent);
+  color: #10131a;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:hover { filter: brightness(1.1); }
+
+button.secondary {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+}
+button.secondary:hover { color: var(--text); filter: none; }
+
+.status {
+  margin: 0;
+  min-height: 18px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.status.error { color: #ff7b72; }
+
+#stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 26px;
+  overflow: hidden;
+}
+
+#canvas {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 2px;
+  background: var(--paper);
+  box-shadow: 0 8px 34px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 720px) {
+  .editor { flex-direction: column; }
+  #panel { width: 100%; border-right: none; border-bottom: 1px solid var(--line); }
+}
+
+
+/* ------------------------------------------------------------------- print */
+
+#print-area { display: none; }
+
+@media print {
+  /* Only the drawing survives: no header, no controls, no gallery, and no
+     page background to waste ink on. */
+  #header,
+  #panel,
+  #gallery,
+  #stage { display: none !important; }
+
+  html, body {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+    color: #000;
+  }
+
+  .editor { display: block; height: auto; padding: 0; }
+
+  #print-area {
+    display: block;
+    margin: 0;
+    padding: 0;
+  }
+
+  #print-area svg {
+    display: block;
+    /* No forced width. The SVG carries its own physical size in millimetres,
+       and letting that stand is what makes the print true-size: a 297x210
+       drawing comes out at exactly 297x210. Forcing width:100% would rescale
+       it to whatever sheet the printer happened to pick, which is precisely
+       the thing printing the canvas would have done wrong. max-width is only
+       a guard against overflowing onto a second page on a smaller sheet. */
+    max-width: 100%;
+    height: auto;
+  }
+}
