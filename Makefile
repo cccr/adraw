@@ -7,7 +7,7 @@ BIN := adraw
 # pure-Go resolver is entirely adequate here.
 export CGO_ENABLED = 0
 
-.PHONY: build test vet check serve wasm serve-wasm deploy-klmn clean
+.PHONY: build test vet check serve wasm serve-wasm deploy-klmn readme-images clean
 
 build:
 	go build -o $(BIN) ./cmd/adraw
@@ -32,6 +32,10 @@ wasm:
 
 serve-wasm: wasm
 	cd $(WASM_OUT) && python3 -m http.server 8081
+
+# The README's example images. See scripts/readme-images.sh.
+readme-images: build
+	./scripts/readme-images.sh
 
 # Publish the engine to klmn.xyz/tools/adraw/. See scripts/deploy-klmn.sh.
 deploy-klmn: check wasm
