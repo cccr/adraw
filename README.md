@@ -23,11 +23,24 @@ will render it; a renderer does not know what generated its input.
 
 Every image is real output, rendered by `make readme-images`.
 
-| | | | |
-|:-:|:-:|:-:|:-:|
-| ![tangle](docs/images/patch-tangle.png)<br>`tangle` | ![vortex](docs/images/patch-vortex.png)<br>`vortex` | ![contour](docs/images/patch-contour.png)<br>`contour` | ![cellwall](docs/images/patch-cellwall.png)<br>`cellwall` |
-| ![fan](docs/images/patch-fan.png)<br>`fan` | ![hatch](docs/images/patch-hatch.png)<br>`hatch` | ![crosshatch](docs/images/patch-crosshatch.png)<br>`crosshatch` | ![stipple](docs/images/patch-stipple.png)<br>`stipple` |
-| ![topo](docs/images/patch-topo.png)<br>`topo` | ![flow](docs/images/patch-flow.png)<br>`flow` | | |
+<table>
+<tr>
+<td align="center"><img src="docs/images/patch-tangle.png" width="200" alt="tangle"><br><code>tangle</code></td>
+<td align="center"><img src="docs/images/patch-vortex.png" width="200" alt="vortex"><br><code>vortex</code></td>
+<td align="center"><img src="docs/images/patch-contour.png" width="200" alt="contour"><br><code>contour</code></td>
+<td align="center"><img src="docs/images/patch-cellwall.png" width="200" alt="cellwall"><br><code>cellwall</code></td>
+</tr>
+<tr>
+<td align="center"><img src="docs/images/patch-fan.png" width="200" alt="fan"><br><code>fan</code></td>
+<td align="center"><img src="docs/images/patch-hatch.png" width="200" alt="hatch"><br><code>hatch</code></td>
+<td align="center"><img src="docs/images/patch-crosshatch.png" width="200" alt="crosshatch"><br><code>crosshatch</code></td>
+<td align="center"><img src="docs/images/patch-stipple.png" width="200" alt="stipple"><br><code>stipple</code></td>
+</tr>
+<tr>
+<td align="center"><img src="docs/images/patch-topo.png" width="200" alt="topo"><br><code>topo</code></td>
+<td align="center"><img src="docs/images/patch-flow.png" width="200" alt="flow"><br><code>flow</code></td>
+</tr>
+</table>
 
 ## Quick start
 
