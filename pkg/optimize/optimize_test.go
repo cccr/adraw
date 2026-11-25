@@ -183,3 +183,28 @@ func TestTravelDistance(t *testing.T) {
 		t.Errorf("TravelDistance = %v, want 10", got)
 	}
 }
+
+func TestReorderKeepsFill(t *testing.T) {
+	sq := func(x float64, fill bool) drawing.Path {
+		return drawing.Path{Closed: true, Fill: fill, Pts: []drawing.Vec2{
+			{X: x, Y: 0}, {X: x + 1, Y: 0}, {X: x + 1, Y: 1}, {X: x, Y: 1}}}
+	}
+	line := drawing.Path{Pts: []drawing.Vec2{{X: 50, Y: 50}, {X: 60, Y: 50}}}
+	f := drawing.Frame{
+		Bounds: drawing.Rect{Max: drawing.Vec2{X: 100, Y: 100}},
+		Paths:  []drawing.Path{sq(40, true), line, sq(0, true), sq(20, false), sq(70, true)},
+	}
+	got := Reorder(f)
+	filled := 0
+	for _, p := range got.Paths {
+		if p.Fill {
+			filled++
+			if !p.Closed {
+				t.Error("a filled path lost Closed")
+			}
+		}
+	}
+	if filled != 3 || len(got.Paths) != 5 {
+		t.Errorf("got %d paths, %d filled; want 5 and 3", len(got.Paths), filled)
+	}
+}

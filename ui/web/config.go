@@ -46,6 +46,8 @@ type PatchConfig struct {
 type PreviewConfig struct {
 	Seed   *int64             `json:"seed"`
 	Values map[string]float64 `json:"values"`
+	// Text overrides text parameters the same way Values overrides numbers.
+	Text map[string]string `json:"text"`
 }
 
 // fallbackCategory is used when the config names none.
@@ -127,6 +129,7 @@ type Tile struct {
 	Description string             `json:"description"`
 	PreviewSeed int64              `json:"previewSeed"`
 	Preview     map[string]float64 `json:"preview"`
+	PreviewText map[string]string  `json:"previewText,omitempty"`
 }
 
 // gallery assembles the landing page: every registered patch, grouped.
@@ -174,6 +177,7 @@ func gallery(cfg *Config) []GalleryCategory {
 			Description: p.Description(),
 			PreviewSeed: 1,
 			Preview:     pc.Preview.Values,
+			PreviewText: pc.Preview.Text,
 		}
 		if pc.Preview.Seed != nil {
 			tile.PreviewSeed = *pc.Preview.Seed

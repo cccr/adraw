@@ -196,7 +196,8 @@ select {
 }
 .icon:hover { border-color: var(--accent); color: var(--accent); }
 
-input[type="number"] {
+input[type="number"],
+input[type="text"] {
   width: 100%;
   padding: 7px 9px;
   border: 1px solid var(--line);

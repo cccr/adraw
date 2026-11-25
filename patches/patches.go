@@ -8,4 +8,5 @@ import (
 	_ "github.com/cccr/adraw/patches/flow"
 	_ "github.com/cccr/adraw/patches/tangle"
 	_ "github.com/cccr/adraw/patches/topo"
+	_ "github.com/cccr/adraw/patches/typecloud"
 )

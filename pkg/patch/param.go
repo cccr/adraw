@@ -2,6 +2,19 @@ package patch
 
 import "math"
 
+// ParamKind says what sort of value a parameter holds.
+type ParamKind int
+
+const (
+	// KindNumber is the zero value, so every spec written before text
+	// parameters existed stays numeric.
+	KindNumber ParamKind = iota
+	// KindText is a free string, carried in Request.Strings rather than
+	// Request.Values. The two are separate so a numeric control surface (a MIDI
+	// CC, a CV input) can never be mapped onto a text parameter.
+	KindText
+)
+
 // ParamSpec describes one tunable control of a patch.
 //
 // Every parameter is a float64 inside a declared [Min,Max]. That uniformity is
@@ -21,6 +34,9 @@ type ParamSpec struct {
 	Default float64
 	Step    float64 // 0 means continuous
 	Unit    string  // "mm", "", "x"
+
+	Kind        ParamKind // KindNumber unless the patch asks for text
+	DefaultText string    // the default of a KindText parameter
 }
 
 // Clamp constrains v to [Min,Max].
@@ -57,6 +73,17 @@ func (v Values) Get(s ParamSpec) float64 {
 	return s.Clamp(raw)
 }
 
+// Strings holds the text parameter settings for one Generate call.
+type Strings map[string]string
+
+// Get returns the value for s, or s.DefaultText if unset. A nil map is fine.
+func (v Strings) Get(s ParamSpec) string {
+	if raw, ok := v[s.Key]; ok {
+		return raw
+	}
+	return s.DefaultText
+}
+
 // ParamSet builds a parameter list fluently, keeping the per-patch declaration
 // boilerplate to a few readable lines.
 type ParamSet struct {
@@ -87,6 +114,12 @@ func (p *ParamSet) Unit(key, label, desc string, min, max, def float64) *ParamSe
 func (p *ParamSet) Count(key, label, desc string, min, max, def float64) *ParamSet {
 	return p.Add(ParamSpec{Key: key, Label: label, Desc: desc,
 		Min: min, Max: max, Default: def, Step: 1})
+}
+
+// Text adds a free-text parameter. Min, Max and Default are unused.
+func (p *ParamSet) Text(key, label, desc, def string) *ParamSet {
+	return p.Add(ParamSpec{Key: key, Label: label, Desc: desc,
+		Kind: KindText, DefaultText: def})
 }
 
 // Specs returns a copy of the declared parameters, so a caller cannot mutate

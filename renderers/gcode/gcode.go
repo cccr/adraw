@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 
 	"github.com/cccr/adraw/pkg/drawing"
 	"github.com/cccr/adraw/pkg/render"
@@ -83,7 +84,19 @@ func writeMeta(w io.Writer, meta map[string]string) {
 	sort.Strings(keys)
 	fmt.Fprint(w, "; adraw:")
 	for _, k := range keys {
-		fmt.Fprintf(w, " %s=%s", k, meta[k])
+		fmt.Fprintf(w, " %s=%s", k, lineSafe(meta[k]))
 	}
 	fmt.Fprintln(w)
+}
+
+// lineSafe keeps free text (a patch's typed-in words) on its own comment line.
+// A line break in it would end the comment, and the rest would be read by the
+// machine as G-code.
+func lineSafe(v string) string {
+	return strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f || r == 0x85 || r == 0x2028 || r == 0x2029 {
+			return ' '
+		}
+		return r
+	}, v)
 }

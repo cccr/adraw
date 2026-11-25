@@ -161,7 +161,7 @@ func rotateToStart(p drawing.Path, start drawing.Vec2) drawing.Path {
 	pts := make([]drawing.Vec2, 0, len(p.Pts))
 	pts = append(pts, p.Pts[best:]...)
 	pts = append(pts, p.Pts[:best]...)
-	return drawing.Path{Pts: pts, Closed: true}
+	return drawing.Path{Pts: pts, Closed: true, Fill: p.Fill}
 }
 
 // reverse returns the path drawn from its other end.
@@ -170,5 +170,5 @@ func reverse(p drawing.Path) drawing.Path {
 	for i, pt := range p.Pts {
 		pts[len(p.Pts)-1-i] = pt
 	}
-	return drawing.Path{Pts: pts, Closed: p.Closed}
+	return drawing.Path{Pts: pts, Closed: p.Closed, Fill: p.Fill}
 }

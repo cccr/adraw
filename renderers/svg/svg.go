@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 
 	"github.com/cccr/adraw/pkg/drawing"
 	"github.com/cccr/adraw/pkg/render"
@@ -82,7 +83,23 @@ func writeMeta(w io.Writer, meta map[string]string) {
 
 	fmt.Fprint(w, "<!-- adraw:")
 	for _, k := range keys {
-		fmt.Fprintf(w, " %s=%s", k, meta[k])
+		fmt.Fprintf(w, " %s=%s", k, commentSafe(meta[k]))
 	}
 	fmt.Fprint(w, " -->\n")
+}
+
+// commentSafe makes free text (a patch's typed-in words) safe inside an XML
+// comment: line breaks become spaces, and "--", which a comment may not contain
+// and which could close it early as "-->", becomes "-%2D".
+func commentSafe(v string) string {
+	v = strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f || r == 0x85 || r == 0x2028 || r == 0x2029 {
+			return ' '
+		}
+		return r
+	}, v)
+	for strings.Contains(v, "--") {
+		v = strings.ReplaceAll(v, "--", "-%2D")
+	}
+	return v
 }

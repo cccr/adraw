@@ -24,6 +24,10 @@ Three rules, all enforced by `patchtest.Verify`:
 3. **Every parameter is a `float64` in a declared `[Min, Max]`.** A MIDI CC maps
    in as `spec.FromNormalized(cc/127)`, a CV input as `FromNormalized(v/10)`.
    Declare an honest range and the patch is playable from anything.
+   The one exception is a text parameter (`Text(...)`, `Kind == KindText`). Its
+   value arrives in `req.Strings`, never `req.Values`, so a numeric control
+   surface cannot reach it; read it with `Strings.Get(spec)`. It must still be
+   deterministic, and survive an empty string.
 
 ## Steps
 

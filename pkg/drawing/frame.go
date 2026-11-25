@@ -20,6 +20,12 @@ type Vec2 struct {
 type Path struct {
 	Pts    []Vec2
 	Closed bool
+
+	// Fill marks a closed path as a solid shape. A pen plotter has no way to
+	// draw one, so SVG and G-code treat it as the outline it is; a raster
+	// renderer fills it by the nonzero winding rule, as fonts define their shapes,
+	// so a letter's counters (wound the other way) stay open.
+	Fill bool
 }
 
 // Vec2Ring is a closed ring of points: a polygon boundary with the closing edge

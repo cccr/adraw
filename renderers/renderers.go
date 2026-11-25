@@ -4,5 +4,6 @@ package renderers
 
 import (
 	_ "github.com/cccr/adraw/renderers/gcode"
+	_ "github.com/cccr/adraw/renderers/png"
 	_ "github.com/cccr/adraw/renderers/svg"
 )

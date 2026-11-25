@@ -142,6 +142,7 @@ function buildGallery() {
 async function drawThumbnail(canvas, tile) {
   const q = new URLSearchParams({ patch: tile.name, seed: tile.previewSeed });
   for (const [k, v] of Object.entries(tile.preview || {})) q.set(k, v);
+  for (const [k, v] of Object.entries(tile.previewText || {})) q.set(k, v);
 
   try {
     const res = await fetch('/api/render?' + q);
@@ -283,6 +284,26 @@ function buildParams() {
 
     head.append(name, value);
 
+    if (spec.kind === 'text') {
+      // A text parameter has no range, so no slider and no readout: a text
+      // box seeded with the patch's default. Typing redraws like a slider does.
+      const box = document.createElement('input');
+      box.type = 'text';
+      box.value = spec.defaultText || '';
+      box.dataset.key = spec.key;
+      box.autocomplete = 'off';
+      box.spellcheck = false;
+      box.addEventListener('input', () => request());
+
+      const hint = document.createElement('p');
+      hint.className = 'param-desc';
+      hint.textContent = spec.description;
+
+      wrap.append(head, box, hint);
+      el.params.append(wrap);
+      continue;
+    }
+
     const slider = document.createElement('input');
     slider.type = 'range';
     slider.min = spec.min;
@@ -329,6 +350,9 @@ function query() {
     page: `${w}x${h}`,
   });
   for (const [k, v] of Object.entries(values())) q.set(k, v);
+  for (const box of el.params.querySelectorAll('input[type="text"]')) {
+    q.set(box.dataset.key, box.value);
+  }
   return q;
 }
 
@@ -394,6 +418,10 @@ function applyURL() {
     const spec = currentPatch().params.find(p => p.key === slider.dataset.key);
     slider.value = Math.min(spec.max, Math.max(spec.min, +raw));
     slider.dispatchEvent(new Event('input', { bubbles: false }));
+  }
+  for (const box of el.params.querySelectorAll('input[type="text"]')) {
+    const raw = q.get(box.dataset.key);
+    if (raw !== null) box.value = raw;
   }
   request();
 }

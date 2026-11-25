@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -11,6 +12,8 @@ import (
 	"testing"
 
 	_ "github.com/cccr/adraw/patches"
+	"github.com/cccr/adraw/pkg/drawing"
+	"github.com/cccr/adraw/pkg/patch"
 	_ "github.com/cccr/adraw/renderers"
 )
 
@@ -419,5 +422,130 @@ func TestPageAppliesToEveryPatch(t *testing.T) {
 				t.Errorf("%s produced %gx%g, want 180x240", name, f.Width, f.Height)
 			}
 		})
+	}
+}
+
+// echoText is a stub patch with one text parameter. It reports back, in the
+// frame's Meta, exactly what string it was given.
+type echoText struct{}
+
+func (echoText) Name() string        { return "echotext" }
+func (echoText) Description() string { return "test stub" }
+func (echoText) Params() []patch.ParamSpec {
+	return patch.NewParamSet().
+		Text("text", "Text", "What to echo.", "dflt").
+		Unit("n", "N", "A number.", 0, 1, 0).Specs()
+}
+func (echoText) Generate(_ context.Context, req patch.Request) (drawing.Frame, error) {
+	spec := echoText{}.Params()[0]
+	w, h := req.PageOr(10, 10)
+	return drawing.Frame{
+		Bounds: drawing.Rect{Max: drawing.Vec2{X: w, Y: h}},
+		Paths:  []drawing.Path{{Pts: []drawing.Vec2{{X: 1, Y: 1}, {X: 2, Y: 2}}}},
+		Meta:   map[string]string{"echo": req.Strings.Get(spec)},
+	}, nil
+}
+
+func init() { patch.Register(echoText{}) }
+
+func TestRenderPassesTextParam(t *testing.T) {
+	for _, in := range []string{`a;b`, `a\;b`, "héllo 世界"} {
+		rec := get(t, "/api/render?patch=echotext&seed=1&text="+url.QueryEscape(in))
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%q: status %d: %s", in, rec.Code, rec.Body)
+		}
+		var f FrameJSON
+		if err := json.Unmarshal(rec.Body.Bytes(), &f); err != nil {
+			t.Fatal(err)
+		}
+		if f.Meta["echo"] != in {
+			t.Errorf("patch received %q, want %q", f.Meta["echo"], in)
+		}
+	}
+}
+
+func TestRenderTextParamDefaultsWhenAbsent(t *testing.T) {
+	rec := get(t, "/api/render?patch=echotext&seed=1")
+	var f FrameJSON
+	_ = json.Unmarshal(rec.Body.Bytes(), &f)
+	if f.Meta["echo"] != "dflt" {
+		t.Errorf("got %q, want the default", f.Meta["echo"])
+	}
+}
+
+func TestTextParamRejectsNormalizedPrefix(t *testing.T) {
+	rec := get(t, "/api/render?patch=echotext&seed=1&n.text=0.5")
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status %d, want 400: a text param has no normalized form", rec.Code)
+	}
+}
+
+func TestPatchListReportsKind(t *testing.T) {
+	var got []PatchInfo
+	_ = json.Unmarshal(get(t, "/api/patches").Body.Bytes(), &got)
+	seen := map[string]string{}
+	for _, p := range got {
+		for _, s := range p.Params {
+			if p.Name == "echotext" {
+				seen[s.Key] = s.Kind
+				if s.Key == "text" && s.DefaultText != "dflt" {
+					t.Errorf("defaultText = %q", s.DefaultText)
+				}
+			}
+			if p.Name == "tangle" && s.Kind != "number" {
+				t.Errorf("tangle %s kind = %q, want number", s.Key, s.Kind)
+			}
+		}
+	}
+	if seen["text"] != "text" || seen["n"] != "number" {
+		t.Errorf("kinds = %v", seen)
+	}
+}
+
+// filledStub returns one filled square and one open line.
+type filledStub struct{}
+
+func (filledStub) Name() string        { return "filledstub" }
+func (filledStub) Description() string { return "test stub" }
+func (filledStub) Params() []patch.ParamSpec {
+	return patch.NewParamSet().Unit("n", "N", "A number.", 0, 1, 0).Specs()
+}
+func (filledStub) Generate(_ context.Context, req patch.Request) (drawing.Frame, error) {
+	w, h := req.PageOr(10, 10)
+	return drawing.Frame{
+		Bounds: drawing.Rect{Max: drawing.Vec2{X: w, Y: h}},
+		Paths: []drawing.Path{
+			{Closed: true, Fill: true, Pts: []drawing.Vec2{{X: 1, Y: 1}, {X: 4, Y: 1}, {X: 4, Y: 4}, {X: 1, Y: 4}}},
+			{Pts: []drawing.Vec2{{X: 5, Y: 5}, {X: 8, Y: 8}}},
+		},
+	}, nil
+}
+
+func init() { patch.Register(filledStub{}) }
+
+func TestRenderJSONReportsFill(t *testing.T) {
+	rec := get(t, "/api/render?patch=filledstub&seed=1")
+	var f FrameJSON
+	if err := json.Unmarshal(rec.Body.Bytes(), &f); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.Fill) != 2 || !f.Fill[0] || f.Fill[1] {
+		t.Errorf("fill = %v, want [true false]", f.Fill)
+	}
+}
+
+func TestExportPNG(t *testing.T) {
+	rec := get(t, "/api/export?patch=filledstub&seed=7&format=png")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body)
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "image/png" {
+		t.Errorf("Content-Type = %q", ct)
+	}
+	if !strings.HasPrefix(rec.Body.String(), "\x89PNG") {
+		t.Error("body is not a PNG")
+	}
+	if cd := rec.Header().Get("Content-Disposition"); !strings.Contains(cd, "filledstub-7.png") {
+		t.Errorf("Content-Disposition = %q", cd)
 	}
 }

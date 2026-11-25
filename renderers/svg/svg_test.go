@@ -76,3 +76,31 @@ func TestZeroBoundsRejected(t *testing.T) {
 		t.Error("a frame with no extent should be rejected, not written as a broken SVG")
 	}
 }
+
+// Free text from a patch (typecloud's) reaches the metadata comment. A comment
+// may not contain "--" and ends at "-->", so text must not be able to do either.
+func TestMetaTextCannotBreakOutOfTheComment(t *testing.T) {
+	for _, text := range []string{"a--b", "x --> <script>alert(1)</script> <!--", "ends-", "line\nbreak"} {
+		f := drawing.Frame{
+			Bounds: drawing.Rect{Max: drawing.Vec2{X: 10, Y: 10}},
+			Paths:  []drawing.Path{{Pts: []drawing.Vec2{{X: 0, Y: 0}, {X: 1, Y: 1}}}},
+			Meta:   map[string]string{"text": text},
+		}
+		out := renderOut(t, f)
+		start := strings.Index(out, "<!--")
+		end := strings.Index(out, "-->")
+		if start < 0 || end < start {
+			t.Fatalf("%q: no well-formed comment in %q", text, out)
+		}
+		body := out[start+4 : end]
+		if strings.Contains(body, "--") || strings.HasSuffix(body, "-") {
+			t.Errorf("%q: comment body %q is not valid XML", text, body)
+		}
+		if strings.Contains(out[end+3:], "script") || strings.Count(out, "<!--") != 1 {
+			t.Errorf("%q: text escaped the comment: %q", text, out)
+		}
+		if strings.Contains(body, "\n") {
+			t.Errorf("%q: newline inside the comment", text)
+		}
+	}
+}

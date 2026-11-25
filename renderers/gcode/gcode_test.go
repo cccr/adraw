@@ -78,3 +78,26 @@ func TestDegeneratePathSkipped(t *testing.T) {
 		t.Error("a single-point path should not be emitted")
 	}
 }
+
+// A newline in free text must not end the "; adraw:" comment: whatever followed
+// it would be read by the controller as a command.
+func TestMetaTextCannotInjectGcode(t *testing.T) {
+	for _, text := range []string{"x\nG1 Z-20 F9000", "x\rG1 Z-20", "x G1 Z-20", "x\x85G1 Z-20"} {
+		f := testFrame()
+		f.Meta["text"] = text
+		var buf bytes.Buffer
+		if err := New().Render(&buf, f); err != nil {
+			t.Fatal(err)
+		}
+		for _, line := range strings.FieldsFunc(buf.String(), func(r rune) bool {
+			return r == '\n' || r == '\r' || r == ' ' || r == ' ' || r == '\x85'
+		}) {
+			if strings.HasPrefix(line, "G1 Z-20") {
+				t.Errorf("%q: injected a command line %q", text, line)
+			}
+		}
+		if got := strings.Count(buf.String(), "; adraw:"); got != 1 {
+			t.Errorf("%q: %d metadata comments", text, got)
+		}
+	}
+}

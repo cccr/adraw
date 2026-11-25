@@ -36,10 +36,14 @@ func main() {
 		for k := range rec.Header() {
 			headers[k] = rec.Header().Get(k)
 		}
+		// The body goes across as bytes, not as a string: a string is text, and
+		// a PNG or any other binary export would be mangled by the conversion.
+		body := js.Global().Get("Uint8Array").New(rec.Body.Len())
+		js.CopyBytesToJS(body, rec.Body.Bytes())
 		return map[string]any{
 			"status":  rec.Code,
 			"headers": headers,
-			"body":    rec.Body.String(),
+			"body":    body,
 		}
 	}))
 

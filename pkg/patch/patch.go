@@ -59,6 +59,9 @@ type Request struct {
 	Border []drawing.Vec2
 
 	Values Values
+
+	// Strings holds the values of text parameters (ParamSpec.Kind == KindText).
+	Strings Strings
 }
 
 // PageOr returns the requested page size, or the given default when none was

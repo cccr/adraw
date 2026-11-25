@@ -78,3 +78,33 @@ func TestParamSetBuilder(t *testing.T) {
 		t.Error("Specs returned an aliased slice")
 	}
 }
+
+func TestTextParamDefaultsAndOverride(t *testing.T) {
+	s := NewParamSet().Text("text", "Text", "What to write.", "hello").Specs()[0]
+	if s.Kind != KindText {
+		t.Fatalf("Kind = %v, want KindText", s.Kind)
+	}
+	if got := (Strings{}).Get(s); got != "hello" {
+		t.Errorf("absent key = %q, want default", got)
+	}
+	if got := (Strings{"text": "a;b"}).Get(s); got != "a;b" {
+		t.Errorf("present key = %q, want a;b", got)
+	}
+}
+
+func TestNumericSpecIsKindNumber(t *testing.T) {
+	for _, s := range NewParamSet().MM("a", "A", "d", 0, 1, 0).Unit("b", "B", "d", 0, 1, 0).
+		Count("c", "C", "d", 0, 1, 0).Specs() {
+		if s.Kind != KindNumber {
+			t.Errorf("%s has Kind %v, want KindNumber", s.Key, s.Kind)
+		}
+	}
+}
+
+func TestTextParamNilStringsFallsBack(t *testing.T) {
+	s := NewParamSet().Text("text", "Text", "d", "dflt").Specs()[0]
+	var nilStrings Strings
+	if got := nilStrings.Get(s); got != "dflt" {
+		t.Errorf("nil Strings = %q, want dflt", got)
+	}
+}

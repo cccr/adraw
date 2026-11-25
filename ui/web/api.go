@@ -44,6 +44,11 @@ type ParamInfo struct {
 	Default     float64 `json:"default"`
 	Step        float64 `json:"step"`
 	Unit        string  `json:"unit"`
+
+	// Kind is "number" or "text". A text control has no range: a client shows
+	// a text box seeded with DefaultText, and Min, Max and Default are zero.
+	Kind        string `json:"kind"`
+	DefaultText string `json:"defaultText,omitempty"`
 }
 
 // RendererInfo is one output format.
@@ -64,6 +69,7 @@ type FrameJSON struct {
 	MinY   float64           `json:"minY"`
 	Paths  [][]float64       `json:"paths"`
 	Closed []bool            `json:"closed"`
+	Fill   []bool            `json:"fill"` // parallel to Paths: true for a solid shape
 	Meta   map[string]string `json:"meta"`
 }
 
@@ -93,11 +99,19 @@ func handlePatches(w http.ResponseWriter, r *http.Request) {
 				Key: s.Key, Label: s.Label, Description: s.Desc,
 				Min: s.Min, Max: s.Max, Default: s.Default,
 				Step: s.Step, Unit: s.Unit,
+				Kind: kindName(s.Kind), DefaultText: s.DefaultText,
 			})
 		}
 		out = append(out, info)
 	}
 	writeJSON(w, out)
+}
+
+func kindName(k patch.ParamKind) string {
+	if k == patch.KindText {
+		return "text"
+	}
+	return "number"
 }
 
 func handleRenderers(w http.ResponseWriter, r *http.Request) {
@@ -127,6 +141,7 @@ func handleRender(w http.ResponseWriter, r *http.Request) {
 		MinY:   frame.Bounds.Min.Y,
 		Paths:  make([][]float64, 0, len(frame.Paths)),
 		Closed: make([]bool, 0, len(frame.Paths)),
+		Fill:   make([]bool, 0, len(frame.Paths)),
 		Meta:   frame.Meta,
 	}
 	for _, p := range frame.Paths {
@@ -136,6 +151,7 @@ func handleRender(w http.ResponseWriter, r *http.Request) {
 		}
 		out.Paths = append(out.Paths, flat)
 		out.Closed = append(out.Closed, p.Closed)
+		out.Fill = append(out.Fill, p.Fill)
 	}
 	writeJSON(w, out)
 }
@@ -218,6 +234,7 @@ func generate(r *http.Request) (drawing.Frame, string, error) {
 	}
 
 	values := patch.Values{}
+	strs := patch.Strings{}
 	for key, raw := range q {
 		switch key {
 		case "patch", "seed", "format", "border", "page":
@@ -230,6 +247,13 @@ func generate(r *http.Request) (drawing.Frame, string, error) {
 		if !ok {
 			return drawing.Frame{}, "", fmt.Errorf("patch %q has no parameter %q", name, lookup)
 		}
+		if spec.Kind == patch.KindText {
+			if normalized {
+				return drawing.Frame{}, "", fmt.Errorf("parameter %q is text and has no normalized form", lookup)
+			}
+			strs[lookup] = raw[0]
+			continue
+		}
 		f, err := strconv.ParseFloat(raw[0], 64)
 		if err != nil {
 			return drawing.Frame{}, "", fmt.Errorf("value for %q is not a number: %q", key, raw[0])
@@ -241,7 +265,7 @@ func generate(r *http.Request) (drawing.Frame, string, error) {
 	}
 
 	frame, err := p.Generate(r.Context(), patch.Request{
-		Seed: seed, Page: page, Border: border, Values: values,
+		Seed: seed, Page: page, Border: border, Values: values, Strings: strs,
 	})
 	return frame, name, err
 }
@@ -303,8 +327,11 @@ func parseBorder(raw string) ([]drawing.Vec2, error) {
 }
 
 func contentType(ext string) string {
-	if ext == "svg" {
+	switch ext {
+	case "svg":
 		return "image/svg+xml"
+	case "png":
+		return "image/png"
 	}
 	return "text/plain; charset=utf-8"
 }

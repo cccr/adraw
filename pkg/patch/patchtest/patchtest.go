@@ -25,6 +25,40 @@ func Verify(t *testing.T, p patch.Patch) {
 	t.Run("seed_sensitivity", func(t *testing.T) { verifySeedSensitivity(t, p) })
 	t.Run("parameter_extremes", func(t *testing.T) { verifyExtremes(t, p) })
 	t.Run("page_size", func(t *testing.T) { verifyPageSize(t, p) })
+	t.Run("text_params", func(t *testing.T) { verifyText(t, p) })
+}
+
+// verifyText holds text parameters to the same determinism rule as numbers,
+// and checks that awkward strings (empty, separators only, non-ASCII) neither
+// fail nor produce non-finite ink.
+func verifyText(t *testing.T, p patch.Patch) {
+	t.Helper()
+	for _, s := range p.Params() {
+		if s.Kind != patch.KindText {
+			continue
+		}
+		for _, in := range []string{"", " ", ";;;", "a;b;c", `a\;b`, `a\\;b`, "héllo 😀 世界", "😀 😀", "日本 語"} {
+			req := patch.Request{Seed: 5, Strings: patch.Strings{s.Key: in}}
+			a, err := p.Generate(context.Background(), req)
+			if err != nil {
+				t.Errorf("%s=%q: %v", s.Key, in, err)
+				continue
+			}
+			b, err := p.Generate(context.Background(), req)
+			if err != nil || len(a.Paths) != len(b.Paths) {
+				t.Errorf("%s=%q: not deterministic", s.Key, in)
+				continue
+			}
+			for _, path := range a.Paths {
+				for _, pt := range path.Pts {
+					if math.IsNaN(pt.X) || math.IsNaN(pt.Y) || math.IsInf(pt.X, 0) || math.IsInf(pt.Y, 0) {
+						t.Errorf("%s=%q: non-finite point", s.Key, in)
+						return
+					}
+				}
+			}
+		}
+	}
 }
 
 func verifyParams(t *testing.T, p patch.Patch) {
